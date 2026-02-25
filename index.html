@@ -228,15 +228,58 @@ function showTab(tab,el){
  el.classList.add("active");
 }
 
+let isSubmitting = false;
+
 function kirim(){
- fetch(API_URL,{
-  method:"POST",
-  body:JSON.stringify({
-   tipe:tipe.value,
-   nominal:nominal.value,
-   catatan:catatan.value
+
+  if(isSubmitting) return;
+
+  const tipeVal = tipe.value;
+  const nominalVal = Number(nominal.value);
+  const catatanVal = catatan.value.trim();
+
+  // validasi kosong
+  if(!nominalVal || nominalVal <= 0){
+    alert("Masukkan nominal yang valid");
+    return;
+  }
+
+  if(!catatanVal){
+    alert("Isi catatan dulu");
+    return;
+  }
+
+  // konfirmasi user
+  const yakin = confirm(
+    `Yakin simpan?\n\n${tipeVal}\n${formatRupiah(nominalVal)}\n${catatanVal}`
+  );
+
+  if(!yakin) return;
+
+  isSubmitting = true;
+
+  const btn = document.querySelector(".btn-primary");
+  btn.disabled = true;
+  btn.innerText = "Menyimpan...";
+
+  fetch(API_URL,{
+    method:"POST",
+    body:JSON.stringify({
+      tipe:tipeVal,
+      nominal:nominalVal,
+      catatan:catatanVal
+    })
   })
- }).then(loadData);
+  .then(()=>{
+    nominal.value="";
+    catatan.value="";
+    loadData();
+  })
+  .finally(()=>{
+    isSubmitting=false;
+    btn.disabled=false;
+    btn.innerText="Simpan";
+  });
 }
 
 function loadData(){
