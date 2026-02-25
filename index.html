@@ -153,8 +153,8 @@ body{
 </div>
 
 <div class="app">
-<div class="card-ios">
-  <canvas id="financeChart" height="140"></canvas>
+<div class="card-ios" style="padding:10px 14px;">
+  <canvas id="financeChart" height="110"></canvas>
 </div>
 <div class="glass-header">
   <div>Save Box</div>
@@ -232,35 +232,60 @@ function updateChart(masuk, keluar){
     financeChart.destroy();
   }
 
+  // gradient hijau
+  const gradMasuk = ctx.createLinearGradient(0,0,0,200);
+  gradMasuk.addColorStop(0,"#6ee7a2");
+  gradMasuk.addColorStop(1,"#34c759");
+
+  // gradient merah
+  const gradKeluar = ctx.createLinearGradient(0,0,0,200);
+  gradKeluar.addColorStop(0,"#ff8a80");
+  gradKeluar.addColorStop(1,"#ff3b30");
+
   financeChart = new Chart(ctx,{
     type:"doughnut",
     data:{
       labels:["Pemasukan","Pengeluaran"],
       datasets:[{
         data:[masuk, keluar],
-        backgroundColor:[
-          "#34c759",
-          "#ff3b30"
-        ],
-        borderWidth:0
+        backgroundColor:[gradMasuk, gradKeluar],
+        borderWidth:0,
+        hoverOffset:6
       }]
     },
     options:{
-  animation:{
-    animateRotate:true,
-    duration:900,
-    easing:"easeOutQuart"
-  },
-  plugins:{
-    legend:{
-      position:"bottom"
-    }
-  },
-  cutout:"72%"
-}
+      animation:{
+        animateRotate:true,
+        duration:900,
+        easing:"easeOutQuart"
+      },
+      plugins:{
+        legend:{
+          position:"bottom",
+          labels:{
+            usePointStyle:true
+          }
+        }
+      },
+      cutout:"75%"
+    },
+    plugins:[{
+      id:"shadow3d",
+      beforeDatasetDraw(chart,args,pluginOptions){
+        const ctx = chart.ctx;
+        ctx.save();
+        ctx.shadowColor="rgba(0,0,0,0.15)";
+        ctx.shadowBlur=18;
+        ctx.shadowOffsetY=6;
+      },
+      afterDatasetDraw(chart,args,pluginOptions){
+        chart.ctx.restore();
+      }
+    }]
   });
 
 }
+  
 function getNominalNumber(){
   return Number(nominalInput.value.replace(/[^0-9]/g,""));
 }
