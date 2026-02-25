@@ -18,7 +18,9 @@
     .app {
       width:100%;
       max-width:420px;
-      padding:80px;
+      padding:16px;
+      padding-top:20px;
+      padding-bottom:80px;
       padding-bottom:40px;
     }
 
@@ -26,7 +28,9 @@
       display:flex;
       justify-content:space-between;
       font-size:13px;
-      padding:4px 8px;
+      padding:16px;
+      padding-top:20px;
+      padding-bottom:80px;
       color:#000;
       margin-bottom:6px;
     }
@@ -36,6 +40,8 @@
       background: rgba(255,255,255,0.75);
       border-radius:20px;
       padding:16px;
+      padding-top:20px;
+      padding-bottom:80px;
       box-shadow:0 6px 20px rgba(0,0,0,0.08);
       margin-bottom:16px;
     }
@@ -48,7 +54,9 @@
     .summary {
       background:white;
       border-radius:16px;
-      padding:12px;
+      padding:16px;
+      padding-top:20px;
+      padding-bottom:80px;
       box-shadow:0 4px 12px rgba(0,0,0,0.05);
       margin-bottom:16px;
     }
@@ -56,7 +64,9 @@
     .segmented {
       background:#e5e5ea;
       border-radius:12px;
-      padding:4px;
+      padding:16px;
+      padding-top:20px;
+      padding-bottom:80px;
       display:flex;
       margin-bottom:16px;
     }
@@ -65,7 +75,9 @@
       flex:1;
       border:none;
       border-radius:10px;
-      padding:8px;
+      padding:16px;
+      padding-top:20px;
+      padding-bottom:80px;
       background:transparent;
       transition:0.2s;
     }
@@ -82,7 +94,9 @@
     .card-ios {
       background:white;
       border-radius:16px;
-      padding:14px;
+      padding:16px;
+      padding-top:20px;
+      padding-bottom:80px;
       box-shadow:0 4px 10px rgba(0,0,0,0.05);
       margin-bottom:12px;
     }
@@ -107,6 +121,44 @@
   color: #8e8e93;
   padding: 10px 0 calc(env(safe-area-inset-bottom) + 6px);
   border-top: 1px solid rgba(0,0,0,0.05);
+}
+    .footer-apple {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 420px;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 8px);
+  background: linear-gradient(to top, rgba(242,242,247,0.95), rgba(242,242,247,0.6));
+  backdrop-filter: blur(30px);
+  text-align: center;
+}
+
+.footer-line {
+  width: 40px;
+  height: 4px;
+  background: rgba(0,0,0,0.15);
+  border-radius: 2px;
+  margin: 6px auto 6px;
+}
+
+.footer-text {
+  font-size: 11px;
+  color: #8e8e93;
+  letter-spacing: 0.2px;
+}
+
+.btn-primary {
+  border-radius:12px;
+  background:#007aff;
+  border:none;
+  transition:0.15s;
+}
+
+.btn-primary:active {
+  transform:scale(0.97);
+  opacity:0.85;
 }
   </style>
 </head>
@@ -164,15 +216,17 @@
 
   <div id="historyTab" style="display:none"></div>
 
-  <footer class="footer-fixed">
-  Astradela Dev Project Save Box v.1.1
+  <footer class="footer-apple">
+  <div class="footer-line"></div>
+  <div class="footer-text">Astradela Dev Project Save Box v.1.1</div>
   </footer>
 
 </div>
 
 <script>
 const API_URL="https://script.google.com/macros/s/AKfycbxUfoqZn6xtwA0jdJpmJ2X9CTnxNZRrJ1_3leckWOimM2Rv-8nLs36k0rfPNgWXM1c/exec";
-
+const time = document.getElementById("time");
+  
 function updateTime(){
   const now=new Date();
   time.innerText=now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
@@ -204,13 +258,13 @@ function kirim(){
 
 function loadData(){
   fetch(API_URL).then(r=>r.json()).then(data=>{
-    let saldo=0, masuk=0, keluar=0;
+    let saldoTotal = 0, masuk = 0, keluar = 0;
     let history="";
 
     data.slice(1).reverse().forEach(row=>{
       let val=Number(row[2]);
-      if(row[1]==="Pemasukan"){ saldo+=val; masuk+=val;}
-      if(row[1]==="Pengeluaran"){ saldo-=val; keluar+=val;}
+      if(row[1]==="Pemasukan"){ saldoTotal+=val; masuk+=val;}
+      if(row[1]==="Pengeluaran"){ saldoTotal-=val; keluar+=val;}
 
       history+=`
         <div class="card-ios history-item">
@@ -223,9 +277,9 @@ function loadData(){
       `;
     });
 
-    saldo.innerText=formatRupiah(saldo);
-    masukEl.innerText=formatRupiah(masuk);
-    keluarEl.innerText=formatRupiah(keluar);
+    document.getElementById("saldo").innerText = formatRupiah(saldoTotal);
+    masukEl.innerText = formatRupiah(masuk);
+    keluarEl.innerText = formatRupiah(keluar);
     historyTab.innerHTML=history;
   });
 }
