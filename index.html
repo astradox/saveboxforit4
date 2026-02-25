@@ -184,7 +184,7 @@ body{
       <option>Pengeluaran</option>
     </select>
 
-    <input id="nominal" type="number" class="form-control mb-2" placeholder="Nominal">
+   <input id="nominal" type="text" inputmode="numeric" class="form-control mb-2" placeholder="Rp 0">
     <input id="catatan" class="form-control mb-3" placeholder="Catatan">
 
     <button onclick="kirim()" class="btn btn-primary w-100">Simpan</button>
@@ -207,7 +207,23 @@ const PIN="2502";
 if(sessionStorage.getItem("unlocked")){
  document.getElementById("lockScreen").style.display="none";
 }
+const nominalInput = document.getElementById("nominal");
 
+nominalInput.addEventListener("input", function(e){
+
+  let value = this.value.replace(/[^0-9]/g,"");
+
+  if(value === ""){
+    this.value="";
+    return;
+  }
+
+  this.value = "Rp " + Number(value).toLocaleString("id-ID");
+});
+
+function getNominalNumber(){
+  return Number(nominalInput.value.replace(/[^0-9]/g,""));
+}
 function cekPIN(){
  if(pinInput.value===PIN){
   sessionStorage.setItem("unlocked","true");
@@ -235,7 +251,7 @@ function kirim(){
   if(isSubmitting) return;
 
   const tipeVal = tipe.value;
-  const nominalVal = Number(nominal.value);
+  const nominalVal = getNominalNumber();
   const catatanVal = catatan.value.trim();
 
   // validasi kosong
