@@ -153,8 +153,10 @@ body{
 </div>
 
 <div class="app">
-<div class="card-ios" style="padding:10px 14px;">
-  <canvas id="financeChart" height="110"></canvas>
+<div class="card-ios" style="padding:8px 12px;">
+  <div style="max-width:220px; margin:auto;">
+    <canvas id="financeChart" height="90"></canvas>
+  </div>
 </div>
 <div class="glass-header">
   <div>Save Box</div>
@@ -260,14 +262,14 @@ function updateChart(masuk, keluar){
         easing:"easeOutQuart"
       },
       plugins:{
-        legend:{
-          position:"bottom",
-          labels:{
-            usePointStyle:true
-          }
-        }
+        labels:{
+  usePointStyle:true,
+  boxWidth:8,
+  padding:8,
+  font:{ size:10 }
+}
       },
-      cutout:"75%"
+      cutout:"82%"
     },
     plugins:[{
       id:"shadow3d",
