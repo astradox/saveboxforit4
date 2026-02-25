@@ -19,32 +19,26 @@
       width:100%;
       max-width:420px;
       padding:16px;
-      padding-top:20px;
-      padding-bottom:80px;
-      padding-bottom:40px;
+      padding-bottom:100px; /* space footer */
     }
 
     .statusbar {
-      display:flex;
-      justify-content:space-between;
-      font-size:13px;
-      padding:16px;
-      padding-top:20px;
-      padding-bottom:80px;
-      color:#000;
-      margin-bottom:6px;
-    }
+  display:flex;
+  justify-content:space-between;
+  font-size:13px;
+  padding:4px 8px;
+  color:#000;
+  margin-bottom:6px;
+}
 
     .glass-header {
-      backdrop-filter: blur(20px);
-      background: rgba(255,255,255,0.75);
-      border-radius:20px;
-      padding:16px;
-      padding-top:20px;
-      padding-bottom:80px;
-      box-shadow:0 6px 20px rgba(0,0,0,0.08);
-      margin-bottom:16px;
-    }
+  backdrop-filter: blur(20px);
+  background: rgba(255,255,255,0.75);
+  border-radius:20px;
+  padding:16px;
+  box-shadow:0 6px 20px rgba(0,0,0,0.08);
+  margin-bottom:16px;
+}
 
     .saldo {
       font-size:28px;
@@ -52,35 +46,29 @@
     }
 
     .summary {
-      background:white;
-      border-radius:16px;
-      padding:16px;
-      padding-top:20px;
-      padding-bottom:80px;
-      box-shadow:0 4px 12px rgba(0,0,0,0.05);
-      margin-bottom:16px;
-    }
+  background:white;
+  border-radius:16px;
+  padding:16px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.05);
+  margin-bottom:16px;
+}
 
     .segmented {
-      background:#e5e5ea;
-      border-radius:12px;
-      padding:16px;
-      padding-top:20px;
-      padding-bottom:80px;
-      display:flex;
-      margin-bottom:16px;
-    }
+  background:#e5e5ea;
+  border-radius:12px;
+  padding:4px;
+  display:flex;
+  margin-bottom:16px;
+}
 
     .segmented button {
-      flex:1;
-      border:none;
-      border-radius:10px;
-      padding:16px;
-      padding-top:20px;
-      padding-bottom:80px;
-      background:transparent;
-      transition:0.2s;
-    }
+  flex:1;
+  border:none;
+  border-radius:10px;
+  padding:8px;
+  background:transparent;
+  transition:0.2s;
+}
 
     .segmented button:active {
       transform:scale(0.96);
@@ -92,14 +80,12 @@
     }
 
     .card-ios {
-      background:white;
-      border-radius:16px;
-      padding:16px;
-      padding-top:20px;
-      padding-bottom:80px;
-      box-shadow:0 4px 10px rgba(0,0,0,0.05);
-      margin-bottom:12px;
-    }
+  background:white;
+  border-radius:16px;
+  padding:14px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.05);
+  margin-bottom:12px;
+}
 
     .history-item {
       display:flex;
@@ -159,6 +145,10 @@
 .btn-primary:active {
   transform:scale(0.97);
   opacity:0.85;
+}
+
+    body {
+  -webkit-font-smoothing: antialiased;
 }
   </style>
 </head>
