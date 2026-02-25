@@ -211,16 +211,17 @@ if(sessionStorage.getItem("unlocked")){
 }
 const nominalInput = document.getElementById("nominal");
 
-nominalInput.addEventListener("input", function(e){
+nominalInput.addEventListener("input", function(){
 
-  let value = this.value.replace(/[^0-9]/g,"");
+  const raw = this.value.replace(/[^0-9]/g,"");
 
-  if(value === ""){
+  if(!raw){
     this.value="";
     return;
   }
 
-  this.value = "Rp " + Number(value).toLocaleString("id-ID");
+  this.value = "Rp " + Number(raw).toLocaleString("id-ID");
+
 });
   
 function updateChart(masuk, keluar){
@@ -245,13 +246,18 @@ function updateChart(masuk, keluar){
       }]
     },
     options:{
-      plugins:{
-        legend:{
-          position:"bottom"
-        }
-      },
-      cutout:"70%"
+  animation:{
+    animateRotate:true,
+    duration:900,
+    easing:"easeOutQuart"
+  },
+  plugins:{
+    legend:{
+      position:"bottom"
     }
+  },
+  cutout:"72%"
+}
   });
 
 }
@@ -281,7 +287,7 @@ function showTab(tab,el){
 let isSubmitting = false;
 
 function kirim(){
-
+  navigator.vibrate?.(50);
   if(isSubmitting) return;
 
   const tipeVal = tipe.value;
@@ -321,7 +327,7 @@ function kirim(){
     })
   })
   .then(()=>{
-    nominal.value="";
+    nominalInput.value="";
     catatan.value="";
     loadData();
   })
@@ -365,7 +371,7 @@ function loadData(){
    </div>`;
   });
 
-  saldoEl.innerText=formatRupiah(saldo);
+  animateSaldo(saldo);
   masukEl.innerText=formatRupiah(masuk);
   keluarEl.innerText=formatRupiah(keluar);
   updateChart(masuk, keluar);
@@ -373,6 +379,20 @@ function loadData(){
  });
 }
 
+  function animateSaldo(end){
+  const start = Number(saldoEl.innerText.replace(/[^0-9]/g,"")) || 0;
+  const duration = 600;
+  let startTime=null;
+
+  function step(timestamp){
+    if(!startTime) startTime=timestamp;
+    const progress=Math.min((timestamp-startTime)/duration,1);
+    const value=Math.floor(start+(end-start)*progress);
+    saldoEl.innerText=formatRupiah(value);
+    if(progress<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
 const saldoEl=document.getElementById("saldo");
 const masukEl=document.getElementById("masuk");
 const keluarEl=document.getElementById("keluar");
