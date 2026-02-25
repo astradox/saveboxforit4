@@ -154,14 +154,18 @@ body{
 </div>
 
 <div class="app">
-<div class="card-ios" style="padding:8px 12px;">
-  <div style="max-width:220px; margin:auto;">
-    <canvas id="financeChart" height="90"></canvas>
+
+<div class="glass-header d-flex justify-content-between align-items-center">
+
+  <div>
+    <div style="opacity:0.8">Save Box</div>
+    <div class="saldo" id="saldo">Rp 0</div>
   </div>
-</div>
-<div class="glass-header">
-  <div>Save Box</div>
-  <div class="saldo" id="saldo">Rp 0</div>
+
+  <div style="width:90px;height:90px">
+    <canvas id="financeChart"></canvas>
+  </div>
+
 </div>
 
 <div class="summary text-center">
@@ -257,21 +261,13 @@ function updateChart(masuk, keluar){
       }]
     },
     options:{
-      animation:{
-        animateRotate:true,
-        duration:900,
-        easing:"easeOutQuart"
-      },
-      plugins:{
-        labels:{
-  usePointStyle:true,
-  boxWidth:8,
-  padding:8,
-  font:{ size:10 }
-}
-      },
-      cutout:"82%"
-    },
+  responsive:true,
+  maintainAspectRatio:false,
+  plugins:{
+    legend:{ display:false }
+  },
+  cutout:"80%"
+},
     plugins:[{
       id:"shadow3d",
       beforeDatasetDraw(chart,args,pluginOptions){
