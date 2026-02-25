@@ -4,7 +4,7 @@
   <title>Save Box</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 body{
   margin:0;
@@ -153,7 +153,9 @@ body{
 </div>
 
 <div class="app">
-
+<div class="card-ios">
+  <canvas id="financeChart" height="140"></canvas>
+</div>
 <div class="glass-header">
   <div>Save Box</div>
   <div class="saldo" id="saldo">Rp 0</div>
@@ -203,7 +205,7 @@ body{
 <script>
 const API_URL="https://script.google.com/macros/s/AKfycbxUfoqZn6xtwA0jdJpmJ2X9CTnxNZRrJ1_3leckWOimM2Rv-8nLs36k0rfPNgWXM1c/exec";
 const PIN="2502";
-
+let financeChart;
 if(sessionStorage.getItem("unlocked")){
  document.getElementById("lockScreen").style.display="none";
 }
@@ -220,7 +222,39 @@ nominalInput.addEventListener("input", function(e){
 
   this.value = "Rp " + Number(value).toLocaleString("id-ID");
 });
+  
+function updateChart(masuk, keluar){
 
+  const ctx = document.getElementById("financeChart").getContext("2d");
+
+  if(financeChart){
+    financeChart.destroy();
+  }
+
+  financeChart = new Chart(ctx,{
+    type:"doughnut",
+    data:{
+      labels:["Pemasukan","Pengeluaran"],
+      datasets:[{
+        data:[masuk, keluar],
+        backgroundColor:[
+          "#34c759",
+          "#ff3b30"
+        ],
+        borderWidth:0
+      }]
+    },
+    options:{
+      plugins:{
+        legend:{
+          position:"bottom"
+        }
+      },
+      cutout:"70%"
+    }
+  });
+
+}
 function getNominalNumber(){
   return Number(nominalInput.value.replace(/[^0-9]/g,""));
 }
@@ -334,6 +368,7 @@ function loadData(){
   saldoEl.innerText=formatRupiah(saldo);
   masukEl.innerText=formatRupiah(masuk);
   keluarEl.innerText=formatRupiah(keluar);
+  updateChart(masuk, keluar);
   historyTab.innerHTML=history;
  });
 }
