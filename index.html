@@ -15,6 +15,11 @@
       justify-content:center;
     }
 
+    .saldo{
+  font-size:28px;
+  font-weight:600;
+}
+    
     .lock-screen{
   position:fixed;
   inset:0;
@@ -67,6 +72,15 @@
       padding-bottom:100px; /* space footer */
     }
 
+    .app{
+  animation:fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn{
+  from{opacity:0; transform:translateY(10px);}
+  to{opacity:1; transform:translateY(0);}
+}
+
     .statusbar {
   display:flex;
   justify-content:space-between;
@@ -77,18 +91,34 @@
 }
 
     .glass-header {
-  backdrop-filter: blur(20px);
-  background: rgba(255,255,255,0.75);
-  border-radius:20px;
-  padding:16px;
-  box-shadow:0 6px 20px rgba(0,0,0,0.08);
+  backdrop-filter: blur(25px);
+  background: linear-gradient(135deg,#007aff,#4facfe);
+  color:white;
+  border-radius:22px;
+  padding:18px;
+  box-shadow:
+    0 10px 30px rgba(0,122,255,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.2);
   margin-bottom:16px;
 }
+    
+.glass-header div:first-child{
+  opacity:0.9;
+}
+    .balance-card{
+  background: linear-gradient(135deg,#007aff,#5ac8fa);
+  color:white;
+}
+    
+    .income{
+  color:#34c759;
+  font-weight:600;
+}
 
-    .saldo {
-      font-size:28px;
-      font-weight:600;
-    }
+    .expense{
+  color:#ff3b30;
+  font-weight:600;
+}
 
     .summary {
   background:white;
@@ -203,6 +233,23 @@
     html {
   scroll-behavior: smooth;
 }
+    #masuk{
+  color:#34c759;
+  font-weight:600;
+}
+
+#keluar{
+  color:#ff3b30;
+  font-weight:600;
+}
+#saldo{
+  text-shadow:0 2px 12px rgba(0,0,0,0.2);
+}
+
+button:active{
+  filter:brightness(0.9);
+}
+    
   </style>
 </head>
 
@@ -282,16 +329,41 @@ const API_URL="https://script.google.com/macros/s/AKfycbxUfoqZn6xtwA0jdJpmJ2X9CT
 const time = document.getElementById("time");
 const PIN = "2502"; // ganti pin kamu
 
+if(sessionStorage.getItem("unlocked")){
+  document.getElementById("lockScreen").style.display="none";
+}
+  
 function cekPIN(){
   const input = document.getElementById("pinInput").value;
 
   if(input === PIN){
+    sessionStorage.setItem("unlocked","true");
     document.getElementById("lockScreen").style.display="none";
   }else{
     document.getElementById("pinError").innerText="PIN salah";
     navigator.vibrate?.(100);
   }
 }
+  
+document.getElementById("pinInput").focus();
+
+document.getElementById("pinInput").addEventListener("keydown", e=>{
+  if(e.key==="Enter") cekPIN();
+});
+  
+  function animateNumber(el, start, end, duration=600){
+  let startTime=null;
+
+  function step(timestamp){
+    if(!startTime) startTime=timestamp;
+    const progress=Math.min((timestamp-startTime)/duration,1);
+    const value=Math.floor(progress*(end-start)+start);
+    el.innerText=formatRupiah(value);
+    if(progress<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+  
 function updateTime(){
   const now=new Date();
   time.innerText=now.toLocaleTimeString("id-ID", {
@@ -365,7 +437,7 @@ function loadData(){
   `;
 });
 
-    document.getElementById("saldo").innerText = formatRupiah(saldoTotal);
+    animateNumber(document.getElementById("saldo"),0,saldoTotal);
     masukEl.innerText = formatRupiah(masuk);
     keluarEl.innerText = formatRupiah(keluar);
     historyTab.innerHTML=history;
