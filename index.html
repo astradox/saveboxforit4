@@ -158,16 +158,13 @@ body{
 <div class="app">
 
 <div class="glass-header d-flex justify-content-between align-items-center">
-
   <div>
     <div style="opacity:0.8">Save Box</div>
     <div class="saldo" id="saldo">Rp 0</div>
   </div>
-
   <div style="width:90px;height:90px">
     <canvas id="financeChart"></canvas>
   </div>
-
 </div>
 
 <div class="summary text-center">
@@ -176,6 +173,7 @@ body{
       <div class="text-muted">Masuk</div>
       <div id="masuk">Rp 0</div>
     </div>
+    <!-- Kolom Sealed (Hidden by Default) -->
     <div class="col" id="sealedCol" style="display:none; border-left:1px solid #eee; border-right:1px solid #eee;">
       <div class="text-muted">Sealed</div>
       <div id="sealedCash">Rp 0</div>
@@ -198,10 +196,8 @@ body{
       <option>Pemasukan</option>
       <option>Pengeluaran</option>
     </select>
-
-   <input id="nominal" type="text" inputmode="numeric" class="form-control mb-2" placeholder="Rp 0">
+    <input id="nominal" type="text" inputmode="numeric" class="form-control mb-2" placeholder="Rp 0">
     <input id="catatan" class="form-control mb-3" placeholder="Catatan">
-
     <button onclick="kirim()" class="btn btn-primary w-100">Simpan</button>
   </div>
 </div>
@@ -217,6 +213,8 @@ body{
 
 <script>
 const API_URL="https://script.google.com/macros/s/AKfycbxUfoqZn6xtwA0jdJpmJ2X9CTnxNZRrJ1_3leckWOimM2Rv-8nLs36k0rfPNgWXM1c/exec";
+
+// Konfigurasi Role Berdasarkan PIN
 const CREDENTIALS = {
   "IT4!2": "admin",
   "SUPER99": "superadmin"
@@ -230,27 +228,48 @@ if(sessionStorage.getItem("unlocked")){
 }
 
 const nominalInput = document.getElementById("nominal");
-
 nominalInput.addEventListener("input", function(){
   const raw = this.value.replace(/[^0-9]/g,"");
-  if(!raw){
-    this.value="";
-    return;
-  }
+  if(!raw){ this.value=""; return; }
   this.value = "Rp " + Number(raw).toLocaleString("id-ID");
 });
 
+function cekPIN(){
+  const role = CREDENTIALS[pinInput.value];
+  if(role){
+    sessionStorage.setItem("unlocked","true");
+    sessionStorage.setItem("userRole", role);
+    applyRoleAccess();
+    lockScreen.style.display="none";
+    loadData(); // Reload data setelah login untuk memastikan filter role aktif
+  } else {
+    pinError.innerText="PIN salah";
+  }
+}
+
+function applyRoleAccess() {
+  const role = sessionStorage.getItem("userRole");
+  if (role === "superadmin") {
+    document.getElementById("sealedCol").style.display = "block";
+    document.querySelector(".glass-header").style.background = "linear-gradient(135deg,#5856d6,#af52de)";
+    
+    const tipeSelect = document.getElementById("tipe");
+    if (tipeSelect && tipeSelect.options.length < 3) {
+      const opt = document.createElement("option");
+      opt.value = "Sealed";
+      opt.text = "Sealed";
+      tipeSelect.add(opt);
+    }
+  }
+}
+
 function updateChart(masuk, keluar){
   const ctx = document.getElementById("financeChart").getContext("2d");
-  if(financeChart){
-    financeChart.destroy();
-  }
+  if(financeChart){ financeChart.destroy(); }
   const gradMasuk = ctx.createLinearGradient(0,0,0,200);
-  gradMasuk.addColorStop(0,"#6ee7a2");
-  gradMasuk.addColorStop(1,"#34c759");
+  gradMasuk.addColorStop(0,"#6ee7a2"); gradMasuk.addColorStop(1,"#34c759");
   const gradKeluar = ctx.createLinearGradient(0,0,0,200);
-  gradKeluar.addColorStop(0,"#ff8a80");
-  gradKeluar.addColorStop(1,"#ff3b30");
+  gradKeluar.addColorStop(0,"#ff8a80"); gradKeluar.addColorStop(1,"#ff3b30");
 
   financeChart = new Chart(ctx,{
     type:"doughnut",
@@ -268,59 +287,12 @@ function updateChart(masuk, keluar){
       maintainAspectRatio:false,
       plugins:{ legend:{ display:false } },
       cutout:"80%"
-    },
-    plugins:[{
-      id:"shadow3d",
-      beforeDatasetDraw(chart){
-        const ctx = chart.ctx;
-        ctx.save();
-        ctx.shadowColor="rgba(0,0,0,0.15)";
-        ctx.shadowBlur=18;
-        ctx.shadowOffsetY=6;
-      },
-      afterDatasetDraw(chart){
-        chart.ctx.restore();
-      }
-    }]
+    }
   });
 }
 
-function getNominalNumber(){
-  return Number(nominalInput.value.replace(/[^0-9]/g,""));
-}
-
-function cekPIN(){
-  const role = CREDENTIALS[pinInput.value];
-  if(role){
-    sessionStorage.setItem("unlocked","true");
-    sessionStorage.setItem("userRole", role);
-    applyRoleAccess();
-    lockScreen.style.display="none";
-  } else {
-    pinError.innerText="PIN salah";
-  }
-}
-
-function applyRoleAccess() {
-  const role = sessionStorage.getItem("userRole");
-  if (role === "superadmin") {
-    document.getElementById("sealedCol").style.display = "block";
-    document.querySelector(".glass-header").style.background = "linear-gradient(135deg,#5856d6,#af52de)";
-    
-    // Update: Tambah kategori Sealed ke dropdown jika belum ada
-    const tipeSelect = document.getElementById("tipe");
-    if (tipeSelect && tipeSelect.options.length < 3) {
-      const opt = document.createElement("option");
-      opt.value = "Sealed";
-      opt.text = "Sealed";
-      tipeSelect.add(opt);
-    }
-  }
-}
-
-function formatRupiah(n){
- return "Rp "+n.toLocaleString("id-ID");
-}
+function getNominalNumber(){ return Number(nominalInput.value.replace(/[^0-9]/g,"")); }
+function formatRupiah(n){ return "Rp "+n.toLocaleString("id-ID"); }
 
 function showTab(tab,el){
  inputTab.style.display=tab==="input"?"block":"none";
@@ -330,101 +302,86 @@ function showTab(tab,el){
 }
 
 let isSubmitting = false;
-
 function kirim(){
   navigator.vibrate?.(50);
   if(isSubmitting) return;
-
   const tipeVal = tipe.value;
   const nominalVal = getNominalNumber();
   const catatanVal = catatan.value.trim();
 
-  if(!nominalVal || nominalVal <= 0){
-    alert("Masukkan nominal yang valid");
-    return;
-  }
-  if(!catatanVal){
-    alert("Isi catatan dulu");
-    return;
-  }
+  if(!nominalVal || nominalVal <= 0){ alert("Masukkan nominal yang valid"); return; }
+  if(!catatanVal){ alert("Isi catatan dulu"); return; }
 
   const yakin = confirm(`Yakin simpan?\n\n${tipeVal}\n${formatRupiah(nominalVal)}\n${catatanVal}`);
   if(!yakin) return;
 
   isSubmitting = true;
   const btn = document.querySelector(".btn-primary");
-  btn.disabled = true;
-  btn.innerText = "Menyimpan...";
+  btn.disabled = true; btn.innerText = "Menyimpan...";
 
   fetch(API_URL,{
     method:"POST",
-    body:JSON.stringify({
-      tipe:tipeVal,
-      nominal:nominalVal,
-      catatan:catatanVal
-    })
+    body:JSON.stringify({ tipe:tipeVal, nominal:nominalVal, catatan:catatanVal })
   })
   .then(()=>{
-    nominalInput.value="";
-    catatan.value="";
+    nominalInput.value=""; catatan.value="";
     loadData();
   })
   .finally(()=>{
-    isSubmitting=false;
-    btn.disabled=false;
-    btn.innerText="Simpan";
+    isSubmitting=false; btn.disabled=false; btn.innerText="Simpan";
   });
 }
 
 function loadData(){
  fetch(API_URL).then(r=>r.json()).then(data=>{
-  let saldo=0,masuk=0,keluar=0,sealedTotal=0,history="";
+  let saldo=0, masuk=0, keluar=0, sealedTotal=0, history="";
+  const currentRole = sessionStorage.getItem("userRole");
 
   data.slice(1).reverse().forEach(row=>{
-   let val=Number(row[2]);
+   // FILTER: Admin tidak bisa melihat transaksi Sealed
+   if(row[1] === "Sealed" && currentRole !== "superadmin") return;
 
-   // Update: Logika kalkulasi termasuk Sealed
-   if(row[1]==="Pemasukan"){saldo+=val;masuk+=val;}
-   else if(row[1]==="Pengeluaran"){saldo-=val;keluar+=val;}
-   else if(row[1]==="Sealed"){sealedTotal+=val;}
+   let val=Number(row[2]);
+   if(row[1]==="Pemasukan"){ saldo+=val; masuk+=val; }
+   else if(row[1]==="Pengeluaran"){ saldo-=val; keluar+=val; }
+   else if(row[1]==="Sealed"){ sealedTotal+=val; }
 
    const tanggal=new Date(row[0]).toLocaleString("id-ID",{
-    weekday:"long", day:"numeric", month:"long", year:"numeric", hour:"2-digit", minute:"2-digit"
+    weekday:"short", day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"
    });
 
-   // Update: Warna khusus untuk Sealed di history
    let warna=row[1]==="Pengeluaran"?"#ff3b30":"#34c759";
    if(row[1]==="Sealed") warna="#5856d6";
 
    history+=`
-   <div class="card-ios" style="display:flex;justify-content:space-between">
+   <div class="card-ios" style="display:flex;justify-content:space-between;align-items:center">
     <div>
-     <div>${row[3]} ${row[1]==="Sealed" ? '<span class="badge bg-light text-dark" style="font-size:9px;vertical-align:middle">Sealed</span>' : ''}</div>
-     <small class="text-muted">${tanggal}</small>
+     <div style="font-size:14px">${row[3]} ${row[1]==="Sealed" ? '<span class="badge bg-light text-dark" style="font-size:9px">Sealed</span>' : ''}</div>
+     <small class="text-muted" style="font-size:11px">${tanggal}</small>
     </div>
-    <div style="color:${warna};font-weight:600">
+    <div style="color:${warna};font-weight:600;font-size:14px">
      ${row[1]==="Pengeluaran"?"-":"+"}${formatRupiah(val)}
     </div>
    </div>`;
   });
 
   animateSaldo(saldo);
-  masukEl.innerText=formatRupiah(masuk);
-  keluarEl.innerText=formatRupiah(keluar);
+  document.getElementById("masuk").innerText=formatRupiah(masuk);
+  document.getElementById("keluar").innerText=formatRupiah(keluar);
   
-  // Update: Tampilkan total Sealed Cash
-  if(sessionStorage.getItem("userRole") === "superadmin"){
-    const sealedEl = document.getElementById("sealedCash");
-    if(sealedEl) sealedEl.innerText = formatRupiah(sealedTotal); 
+  if(currentRole === "superadmin"){
+    const sEl = document.getElementById("sealedCash");
+    if(sEl) sEl.innerText = formatRupiah(sealedTotal); 
   }
 
   updateChart(masuk, keluar);
-  historyTab.innerHTML=history;
+  document.getElementById("historyTab").innerHTML=history;
  });
 }
 
 function animateSaldo(end){
-  const start = Number(saldoEl.innerText.replace(/[^0-9]/g,"")) || 0;
+  const sEl = document.getElementById("saldo");
+  const start = Number(sEl.innerText.replace(/[^0-9]/g,"")) || 0;
   const duration = 600;
   let startTime=null;
 
@@ -432,15 +389,11 @@ function animateSaldo(end){
     if(!startTime) startTime=timestamp;
     const progress=Math.min((timestamp-startTime)/duration,1);
     const value=Math.floor(start+(end-start)*progress);
-    saldoEl.innerText=formatRupiah(value);
+    sEl.innerText=formatRupiah(value);
     if(progress<1) requestAnimationFrame(step);
   }
   requestAnimationFrame(step);
 }
-
-const saldoEl=document.getElementById("saldo");
-const masukEl=document.getElementById("masuk");
-const keluarEl=document.getElementById("keluar");
 
 loadData();
 </script>
