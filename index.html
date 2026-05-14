@@ -65,6 +65,7 @@ body{
   padding:18px;
   box-shadow:0 10px 30px rgba(0,122,255,0.3);
   margin-bottom:16px;
+  transition: background 0.5s ease;
 }
 
 .saldo{
@@ -84,6 +85,7 @@ body{
 
 #masuk{color:#34c759;font-weight:600;}
 #keluar{color:#ff3b30;font-weight:600;}
+#sealedCash{color:#5856d6;font-weight:600;}
 
 .segmented{
   background:#e5e5ea;
@@ -174,6 +176,11 @@ body{
       <div class="text-muted">Masuk</div>
       <div id="masuk">Rp 0</div>
     </div>
+    <!-- Tambahan: Kolom Sealed Cash khusus Superadmin -->
+    <div class="col" id="sealedCol" style="display:none; border-left:1px solid #eee; border-right:1px solid #eee;">
+      <div class="text-muted">Sealed</div>
+      <div id="sealedCash">Rp 0</div>
+    </div>
     <div class="col">
       <div class="text-muted">Keluar</div>
       <div id="keluar">Rp 0</div>
@@ -211,40 +218,39 @@ body{
 
 <script>
 const API_URL="https://script.google.com/macros/s/AKfycbxUfoqZn6xtwA0jdJpmJ2X9CTnxNZRrJ1_3leckWOimM2Rv-8nLs36k0rfPNgWXM1c/exec";
-const PIN="IT4!2";
+// Update: Data Credentials
+const CREDENTIALS = {
+  "IT4!2": "admin",
+  "SUPER99": "superadmin"
+};
+
 let financeChart;
+
+// Update: Pengecekan session saat reload
 if(sessionStorage.getItem("unlocked")){
- document.getElementById("lockScreen").style.display="none";
+  document.getElementById("lockScreen").style.display="none";
+  applyRoleAccess();
 }
+
 const nominalInput = document.getElementById("nominal");
 
 nominalInput.addEventListener("input", function(){
-
   const raw = this.value.replace(/[^0-9]/g,"");
-
   if(!raw){
     this.value="";
     return;
   }
-
   this.value = "Rp " + Number(raw).toLocaleString("id-ID");
-
 });
-  
+
 function updateChart(masuk, keluar){
-
   const ctx = document.getElementById("financeChart").getContext("2d");
-
   if(financeChart){
     financeChart.destroy();
   }
-
-  // gradient hijau
   const gradMasuk = ctx.createLinearGradient(0,0,0,200);
   gradMasuk.addColorStop(0,"#6ee7a2");
   gradMasuk.addColorStop(1,"#34c759");
-
-  // gradient merah
   const gradKeluar = ctx.createLinearGradient(0,0,0,200);
   gradKeluar.addColorStop(0,"#ff8a80");
   gradKeluar.addColorStop(1,"#ff3b30");
@@ -261,40 +267,51 @@ function updateChart(masuk, keluar){
       }]
     },
     options:{
-  responsive:true,
-  maintainAspectRatio:false,
-  plugins:{
-    legend:{ display:false }
-  },
-  cutout:"80%"
-},
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      cutout:"80%"
+    },
     plugins:[{
       id:"shadow3d",
-      beforeDatasetDraw(chart,args,pluginOptions){
+      beforeDatasetDraw(chart){
         const ctx = chart.ctx;
         ctx.save();
         ctx.shadowColor="rgba(0,0,0,0.15)";
         ctx.shadowBlur=18;
         ctx.shadowOffsetY=6;
       },
-      afterDatasetDraw(chart,args,pluginOptions){
+      afterDatasetDraw(chart){
         chart.ctx.restore();
       }
     }]
   });
-
 }
-  
+
 function getNominalNumber(){
   return Number(nominalInput.value.replace(/[^0-9]/g,""));
 }
+
+// Update: Fungsi Cek PIN dengan Role
 function cekPIN(){
- if(pinInput.value===PIN){
-  sessionStorage.setItem("unlocked","true");
-  lockScreen.style.display="none";
- }else{
-  pinError.innerText="PIN salah";
- }
+  const role = CREDENTIALS[pinInput.value];
+  if(role){
+    sessionStorage.setItem("unlocked","true");
+    sessionStorage.setItem("userRole", role);
+    applyRoleAccess();
+    lockScreen.style.display="none";
+  } else {
+    pinError.innerText="PIN salah";
+  }
+}
+
+// Update: Fungsi untuk mengatur tampilan berdasarkan role
+function applyRoleAccess() {
+  const role = sessionStorage.getItem("userRole");
+  if (role === "superadmin") {
+    document.getElementById("sealedCol").style.display = "block";
+    document.querySelector(".glass-header").style.background = "linear-gradient(135deg,#5856d6,#af52de)";
+  }
 }
 
 function formatRupiah(n){
@@ -318,26 +335,19 @@ function kirim(){
   const nominalVal = getNominalNumber();
   const catatanVal = catatan.value.trim();
 
-  // validasi kosong
   if(!nominalVal || nominalVal <= 0){
     alert("Masukkan nominal yang valid");
     return;
   }
-
   if(!catatanVal){
     alert("Isi catatan dulu");
     return;
   }
 
-  // konfirmasi user
-  const yakin = confirm(
-    `Yakin simpan?\n\n${tipeVal}\n${formatRupiah(nominalVal)}\n${catatanVal}`
-  );
-
+  const yakin = confirm(`Yakin simpan?\n\n${tipeVal}\n${formatRupiah(nominalVal)}\n${catatanVal}`);
   if(!yakin) return;
 
   isSubmitting = true;
-
   const btn = document.querySelector(".btn-primary");
   btn.disabled = true;
   btn.innerText = "Menyimpan...";
@@ -373,12 +383,7 @@ function loadData(){
    if(row[1]==="Pengeluaran"){saldo-=val;keluar+=val;}
 
    const tanggal=new Date(row[0]).toLocaleString("id-ID",{
-    weekday:"long",
-    day:"numeric",
-    month:"long",
-    year:"numeric",
-    hour:"2-digit",
-    minute:"2-digit"
+    weekday:"long", day:"numeric", month:"long", year:"numeric", hour:"2-digit", minute:"2-digit"
    });
 
    const warna=row[1]==="Pengeluaran"?"#ff3b30":"#34c759";
@@ -398,12 +403,18 @@ function loadData(){
   animateSaldo(saldo);
   masukEl.innerText=formatRupiah(masuk);
   keluarEl.innerText=formatRupiah(keluar);
+  
+  // Jika role superadmin, update juga Sealed Cash (Contoh: Dummy value)
+  if(sessionStorage.getItem("userRole") === "superadmin"){
+    document.getElementById("sealedCash").innerText = formatRupiah(0); 
+  }
+
   updateChart(masuk, keluar);
   historyTab.innerHTML=history;
  });
 }
 
-  function animateSaldo(end){
+function animateSaldo(end){
   const start = Number(saldoEl.innerText.replace(/[^0-9]/g,"")) || 0;
   const duration = 600;
   let startTime=null;
@@ -417,6 +428,7 @@ function loadData(){
   }
   requestAnimationFrame(step);
 }
+
 const saldoEl=document.getElementById("saldo");
 const masukEl=document.getElementById("masuk");
 const keluarEl=document.getElementById("keluar");
