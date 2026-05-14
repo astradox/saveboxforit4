@@ -191,7 +191,6 @@ body{
     </div>
   </div>
   
-  <!-- Rekapan Khusus Bulan Ini -->
   <div class="monthly-badge">
     <span>Bulan Ini:</span>
     <div>
@@ -226,8 +225,8 @@ body{
 <div id="inputTab">
   <div class="card-ios">
     <select id="tipe" class="form-select mb-2" style="font-size: 14px;">
-      <option>Pemasukan</option>
-      <option>Pengeluaran</option>
+      <option value="Pemasukan">Pemasukan</option>
+      <option value="Pengeluaran">Pengeluaran</option>
     </select>
     <input id="nominal" type="text" inputmode="numeric" class="form-control mb-2" placeholder="Rp 0" style="font-size: 14px;">
     <input id="catatan" class="form-control mb-3" placeholder="Catatan" style="font-size: 14px;">
@@ -285,10 +284,15 @@ function applyRoleAccess() {
     document.getElementById("sealedCol").style.display = "block";
     document.querySelector(".glass-header").style.background = "linear-gradient(135deg,#5856d6,#af52de)";
     const tipeSelect = document.getElementById("tipe");
-    if (tipeSelect && tipeSelect.options.length < 3) {
-      const opt = document.createElement("option");
-      opt.value = "Sealed"; opt.text = "Sealed";
-      tipeSelect.add(opt);
+    // Tambahkan opsi Sealed Masuk dan Keluar untuk Superadmin
+    if (tipeSelect && tipeSelect.options.length < 4) {
+      const optIn = document.createElement("option");
+      optIn.value = "Sealed"; optIn.text = "Sealed (Masuk)";
+      tipeSelect.add(optIn);
+      
+      const optOut = document.createElement("option");
+      optOut.value = "Sealed Out"; optOut.text = "Sealed (Keluar)";
+      tipeSelect.add(optOut);
     }
   }
 }
@@ -368,17 +372,21 @@ function loadData(){
   const currentYear = now.getFullYear();
 
   data.slice(1).reverse().forEach(row=>{
-   if(row[1] === "Sealed" && currentRole !== "superadmin") return;
+   // Sembunyikan Sealed In maupun Sealed Out dari Admin biasa
+   if((row[1] === "Sealed" || row[1] === "Sealed Out") && currentRole !== "superadmin") return;
 
    let val=Number(row[2]);
    let rowDate = new Date(row[0]);
    
-   // Logic Total
+   // LOGIKA KALKULASI SALDO UTAMA
    if(row[1]==="Pemasukan"){ saldo+=val; masuk+=val; }
    else if(row[1]==="Pengeluaran"){ saldo-=val; keluar+=val; }
+   
+   // LOGIKA KALKULASI SALDO SEALED
    else if(row[1]==="Sealed"){ sealedTotal+=val; }
+   else if(row[1]==="Sealed Out"){ sealedTotal-=val; }
 
-   // Logic Monthly Filter
+   // LOGIKA BULANAN (Hanya Pemasukan & Pengeluaran Umum)
    if(rowDate.getMonth() === currentMonth && rowDate.getFullYear() === currentYear){
      if(row[1]==="Pemasukan") monthlyMasuk += val;
      if(row[1]==="Pengeluaran") monthlyKeluar += val;
@@ -388,17 +396,20 @@ function loadData(){
     weekday:"short", day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"
    });
 
-   let warna=row[1]==="Pengeluaran"?"#ff3b30":"#34c759";
-   if(row[1]==="Sealed") warna="#5856d6";
+   // WARNA DI HISTORY
+   let warna="#34c759"; // Hijau default
+   if(row[1]==="Pengeluaran") warna="#ff3b30"; // Merah
+   if(row[1]==="Sealed") warna="#5856d6"; // Ungu (In)
+   if(row[1]==="Sealed Out") warna="#af52de"; // Ungu Muda (Out)
 
    history+=`
    <div class="card-ios" style="display:flex;justify-content:space-between;align-items:center">
     <div>
-     <div style="font-size:14px">${row[3]} ${row[1]==="Sealed" ? '<span class="badge bg-light text-dark" style="font-size:9px">Sealed</span>' : ''}</div>
+     <div style="font-size:14px">${row[3]} ${ (row[1].includes("Sealed")) ? '<span class="badge bg-light text-dark" style="font-size:9px">Sealed</span>' : ''}</div>
      <small class="text-muted" style="font-size:11px">${tanggal}</small>
     </div>
     <div style="color:${warna};font-weight:600;font-size:14px">
-     ${row[1]==="Pengeluaran"?"-":"+"}${formatRupiah(val)}
+     ${(row[1]==="Pengeluaran" || row[1]==="Sealed Out")?"-":"+"}${formatRupiah(val)}
     </div>
    </div>`;
   });
