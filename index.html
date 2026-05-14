@@ -2,15 +2,11 @@
 <html>
 <head>
   <title>Save Box, IT4SM!</title>
-  <!-- Update Meta Tag: Mencegah zoom otomatis saat klik input yang bikin layar goyang -->
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-/* Reset Global agar tidak ada elemen yang meluber keluar layar */
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body{
   margin:0;
@@ -18,7 +14,6 @@ body{
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;
   display:flex;
   justify-content:center;
-  /* Kunci geser horizontal */
   overflow-x: hidden; 
   width: 100vw;
 }
@@ -27,7 +22,6 @@ body{
   width:100%;
   max-width:420px;
   padding:16px;
-  /* Padding bawah disesuaikan agar tidak tertutup footer */
   padding-bottom: 140px; 
   min-height: 100vh;
 }
@@ -58,7 +52,7 @@ body{
   border-radius:12px;
   border:1px solid #ddd;
   text-align:center;
-  font-size: 16px; /* Font minimal 16px agar iOS tidak auto-zoom */
+  font-size: 16px;
 }
 
 .lock-card button{
@@ -76,7 +70,7 @@ body{
   border-radius:22px;
   padding:18px;
   box-shadow:0 10px 30px rgba(0,122,255,0.3);
-  margin-bottom:16px;
+  margin-bottom:12px;
   transition: background 0.5s ease;
 }
 
@@ -85,6 +79,19 @@ body{
   font-weight:600;
   color:white;
   text-shadow:0 2px 12px rgba(0,0,0,0.25);
+}
+
+.monthly-badge{
+  background: rgba(255,255,255,0.2);
+  backdrop-filter: blur(10px);
+  border-radius:12px;
+  padding: 8px 12px;
+  margin-bottom: 16px;
+  font-size: 11px;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  border: 1px solid rgba(255,255,255,0.3);
 }
 
 .summary{
@@ -136,7 +143,6 @@ body{
   transform:translateX(-50%);
   width:100%;
   max-width:420px;
-  /* Area aman untuk HP modern (bezel-less) */
   padding-bottom: calc(env(safe-area-inset-bottom) + 12px);
   background: rgba(242, 242, 247, 0.85);
   backdrop-filter: blur(20px);
@@ -174,29 +180,40 @@ body{
 
 <div class="app">
 
-<div class="glass-header d-flex justify-content-between align-items-center">
-  <div>
-    <div style="opacity:0.8; font-size: 14px;">Save Box</div>
-    <div class="saldo" id="saldo">Rp 0</div>
+<div class="glass-header">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <div style="opacity:0.8; font-size: 13px;">Total Saldo Saat Ini</div>
+      <div class="saldo" id="saldo">Rp 0</div>
+    </div>
+    <div style="width:75px;height:75px">
+      <canvas id="financeChart"></canvas>
+    </div>
   </div>
-  <div style="width:85px;height:85px">
-    <canvas id="financeChart"></canvas>
+  
+  <!-- Rekapan Khusus Bulan Ini -->
+  <div class="monthly-badge">
+    <span>Bulan Ini:</span>
+    <div>
+      <span style="color:#afffba" id="m-masuk">+Rp 0</span> | 
+      <span style="color:#ffb3af" id="m-keluar">-Rp 0</span>
+    </div>
   </div>
 </div>
 
 <div class="summary text-center">
   <div class="row">
     <div class="col">
-      <div class="text-muted" style="font-size: 12px;">Masuk</div>
-      <div id="masuk" style="font-size: 14px;">Rp 0</div>
+      <div class="text-muted" style="font-size: 11px;">Total Masuk</div>
+      <div id="masuk" style="font-size: 13px;">Rp 0</div>
     </div>
     <div class="col" id="sealedCol" style="display:none; border-left:1px solid #eee; border-right:1px solid #eee;">
-      <div class="text-muted" style="font-size: 12px;">Sealed</div>
-      <div id="sealedCash" style="font-size: 14px;">Rp 0</div>
+      <div class="text-muted" style="font-size: 11px;">Sealed</div>
+      <div id="sealedCash" style="font-size: 13px;">Rp 0</div>
     </div>
     <div class="col">
-      <div class="text-muted" style="font-size: 12px;">Keluar</div>
-      <div id="keluar" style="font-size: 14px;">Rp 0</div>
+      <div class="text-muted" style="font-size: 11px;">Total Keluar</div>
+      <div id="keluar" style="font-size: 13px;">Rp 0</div>
     </div>
   </div>
 </div>
@@ -267,12 +284,10 @@ function applyRoleAccess() {
   if (role === "superadmin") {
     document.getElementById("sealedCol").style.display = "block";
     document.querySelector(".glass-header").style.background = "linear-gradient(135deg,#5856d6,#af52de)";
-    
     const tipeSelect = document.getElementById("tipe");
     if (tipeSelect && tipeSelect.options.length < 3) {
       const opt = document.createElement("option");
-      opt.value = "Sealed";
-      opt.text = "Sealed";
+      opt.value = "Sealed"; opt.text = "Sealed";
       tipeSelect.add(opt);
     }
   }
@@ -281,17 +296,14 @@ function applyRoleAccess() {
 function updateChart(masuk, keluar){
   const ctx = document.getElementById("financeChart").getContext("2d");
   if(financeChart){ financeChart.destroy(); }
-  
-  // Minimal data agar chart tidak kosong saat awal
   const dataValue = (masuk === 0 && keluar === 0) ? [1, 0] : [masuk, keluar];
-
   financeChart = new Chart(ctx,{
     type:"doughnut",
     data:{
-      labels:["Pemasukan","Pengeluaran"],
+      labels:["Masuk","Keluar"],
       datasets:[{
         data: dataValue,
-        backgroundColor:["#34c759", "#ff3b30"],
+        backgroundColor:["#ffffff", "rgba(255,255,255,0.3)"],
         borderWidth:0,
       }]
     },
@@ -348,17 +360,31 @@ function kirim(){
 function loadData(){
  fetch(API_URL).then(r=>r.json()).then(data=>{
   let saldo=0, masuk=0, keluar=0, sealedTotal=0, history="";
+  let monthlyMasuk=0, monthlyKeluar=0;
+  
   const currentRole = sessionStorage.getItem("userRole");
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
 
   data.slice(1).reverse().forEach(row=>{
    if(row[1] === "Sealed" && currentRole !== "superadmin") return;
 
    let val=Number(row[2]);
+   let rowDate = new Date(row[0]);
+   
+   // Logic Total
    if(row[1]==="Pemasukan"){ saldo+=val; masuk+=val; }
    else if(row[1]==="Pengeluaran"){ saldo-=val; keluar+=val; }
    else if(row[1]==="Sealed"){ sealedTotal+=val; }
 
-   const tanggal=new Date(row[0]).toLocaleString("id-ID",{
+   // Logic Monthly Filter
+   if(rowDate.getMonth() === currentMonth && rowDate.getFullYear() === currentYear){
+     if(row[1]==="Pemasukan") monthlyMasuk += val;
+     if(row[1]==="Pengeluaran") monthlyKeluar += val;
+   }
+
+   const tanggal=rowDate.toLocaleString("id-ID",{
     weekday:"short", day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"
    });
 
@@ -380,6 +406,8 @@ function loadData(){
   animateSaldo(saldo);
   document.getElementById("masuk").innerText=formatRupiah(masuk);
   document.getElementById("keluar").innerText=formatRupiah(keluar);
+  document.getElementById("m-masuk").innerText="+"+formatRupiah(monthlyMasuk);
+  document.getElementById("m-keluar").innerText="-"+formatRupiah(monthlyKeluar);
   
   if(currentRole === "superadmin"){
     const sEl = document.getElementById("sealedCash");
@@ -396,7 +424,6 @@ function animateSaldo(end){
   const start = Number(sEl.innerText.replace(/[^0-9]/g,"")) || 0;
   const duration = 600;
   let startTime=null;
-
   function step(timestamp){
     if(!startTime) startTime=timestamp;
     const progress=Math.min((timestamp-startTime)/duration,1);
