@@ -176,7 +176,6 @@ body{
       <div class="text-muted">Masuk</div>
       <div id="masuk">Rp 0</div>
     </div>
-    <!-- Tambahan: Kolom Sealed Cash khusus Superadmin -->
     <div class="col" id="sealedCol" style="display:none; border-left:1px solid #eee; border-right:1px solid #eee;">
       <div class="text-muted">Sealed</div>
       <div id="sealedCash">Rp 0</div>
@@ -218,7 +217,6 @@ body{
 
 <script>
 const API_URL="https://script.google.com/macros/s/AKfycbxUfoqZn6xtwA0jdJpmJ2X9CTnxNZRrJ1_3leckWOimM2Rv-8nLs36k0rfPNgWXM1c/exec";
-// Update: Data Credentials
 const CREDENTIALS = {
   "IT4!2": "admin",
   "SUPER99": "superadmin"
@@ -226,7 +224,6 @@ const CREDENTIALS = {
 
 let financeChart;
 
-// Update: Pengecekan session saat reload
 if(sessionStorage.getItem("unlocked")){
   document.getElementById("lockScreen").style.display="none";
   applyRoleAccess();
@@ -292,7 +289,6 @@ function getNominalNumber(){
   return Number(nominalInput.value.replace(/[^0-9]/g,""));
 }
 
-// Update: Fungsi Cek PIN dengan Role
 function cekPIN(){
   const role = CREDENTIALS[pinInput.value];
   if(role){
@@ -305,12 +301,20 @@ function cekPIN(){
   }
 }
 
-// Update: Fungsi untuk mengatur tampilan berdasarkan role
 function applyRoleAccess() {
   const role = sessionStorage.getItem("userRole");
   if (role === "superadmin") {
     document.getElementById("sealedCol").style.display = "block";
     document.querySelector(".glass-header").style.background = "linear-gradient(135deg,#5856d6,#af52de)";
+    
+    // Update: Tambah kategori Sealed ke dropdown jika belum ada
+    const tipeSelect = document.getElementById("tipe");
+    if (tipeSelect && tipeSelect.options.length < 3) {
+      const opt = document.createElement("option");
+      opt.value = "Sealed";
+      opt.text = "Sealed";
+      tipeSelect.add(opt);
+    }
   }
 }
 
@@ -374,24 +378,28 @@ function kirim(){
 
 function loadData(){
  fetch(API_URL).then(r=>r.json()).then(data=>{
-  let saldo=0,masuk=0,keluar=0,history="";
+  let saldo=0,masuk=0,keluar=0,sealedTotal=0,history="";
 
   data.slice(1).reverse().forEach(row=>{
    let val=Number(row[2]);
 
+   // Update: Logika kalkulasi termasuk Sealed
    if(row[1]==="Pemasukan"){saldo+=val;masuk+=val;}
-   if(row[1]==="Pengeluaran"){saldo-=val;keluar+=val;}
+   else if(row[1]==="Pengeluaran"){saldo-=val;keluar+=val;}
+   else if(row[1]==="Sealed"){sealedTotal+=val;}
 
    const tanggal=new Date(row[0]).toLocaleString("id-ID",{
     weekday:"long", day:"numeric", month:"long", year:"numeric", hour:"2-digit", minute:"2-digit"
    });
 
-   const warna=row[1]==="Pengeluaran"?"#ff3b30":"#34c759";
+   // Update: Warna khusus untuk Sealed di history
+   let warna=row[1]==="Pengeluaran"?"#ff3b30":"#34c759";
+   if(row[1]==="Sealed") warna="#5856d6";
 
    history+=`
    <div class="card-ios" style="display:flex;justify-content:space-between">
     <div>
-     <div>${row[3]}</div>
+     <div>${row[3]} ${row[1]==="Sealed" ? '<span class="badge bg-light text-dark" style="font-size:9px;vertical-align:middle">Sealed</span>' : ''}</div>
      <small class="text-muted">${tanggal}</small>
     </div>
     <div style="color:${warna};font-weight:600">
@@ -404,9 +412,10 @@ function loadData(){
   masukEl.innerText=formatRupiah(masuk);
   keluarEl.innerText=formatRupiah(keluar);
   
-  // Jika role superadmin, update juga Sealed Cash (Contoh: Dummy value)
+  // Update: Tampilkan total Sealed Cash
   if(sessionStorage.getItem("userRole") === "superadmin"){
-    document.getElementById("sealedCash").innerText = formatRupiah(0); 
+    const sealedEl = document.getElementById("sealedCash");
+    if(sealedEl) sealedEl.innerText = formatRupiah(sealedTotal); 
   }
 
   updateChart(masuk, keluar);
